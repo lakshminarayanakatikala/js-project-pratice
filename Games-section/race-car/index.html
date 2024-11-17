@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colorful Racer Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(45deg, hsla(296, 92%, 23%, 0.568), hsla(18, 82%, 54%, 0.568), hsla(204, 70%, 53%, 0.6), hsla(145, 63%, 44%, 0.546)); 
+        }
+
+        canvas {
+            display: block;
+            border: 2px solid #fff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            margin: auto;
+        }
+
+        .score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.5rem;
+            color: #fff;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 2rem;
+            text-align: center;
+            display: none;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
+        }
+
+        .game-over button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: #FF6F61;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        .game-over button:hover {
+            background-color: #EA6227;
+            transform: scale(1.1);
+        }
+
+        .game-over button:active {
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body>
+    <div class="score">Score: <span id="score">0</span></div>
+    <div class="game-over" id="gameOver">
+        <p>Game Over!</p>
+        <button onclick="restartGame()">Restart</button>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const context = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('score');
+        const gameOverDisplay = document.getElementById('gameOver');
+        
+        // Adjust canvas size on window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let car = { x: canvas.width / 2, y: canvas.height - 100, width: 50, height: 80, speed: 5 };
+        let obstacles = [];
+        let score = 0;
+        let gameRunning = true;
+
+        function drawCar() {
+            context.fillStyle = "#FFC300"; // Bright yellow car
+            context.fillRect(car.x, car.y, car.width, car.height);
+
+            // Add wheels
+            context.fillStyle = "#333";
+            context.fillRect(car.x + 5, car.y + car.height - 10, 10, 10); // Left wheel
+            context.fillRect(car.x + car.width - 15, car.y + car.height - 10, 10, 10); // Right wheel
+        }
+
+        function drawObstacles() {
+            obstacles.forEach(obstacle => {
+                context.fillStyle = "black"; // Black obstacles
+                context.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            });
+        }
+
+        function updateObstacles() {
+            for (let i = 0; i < obstacles.length; i++) {
+                obstacles[i].y += 2; // Slower speed for obstacles
+                if (obstacles[i].y > canvas.height) {
+                    obstacles.splice(i, 1); // Remove passed obstacle
+                    score++;
+                }
+            }
+
+            if (Math.random() < 0.02) { // Random obstacle generation
+                const obstacleWidth = Math.random() * 100 + 50;
+                const obstacleX = Math.random() * (canvas.width - obstacleWidth);
+                obstacles.push({ x: obstacleX, y: 0, width: obstacleWidth, height: 30 });
+            }
+        }
+
+        function checkCollision() {
+            for (let obstacle of obstacles) {
+                if (
+                    car.x < obstacle.x + obstacle.width &&
+                    car.x + car.width > obstacle.x &&
+                    car.y < obstacle.y + obstacle.height &&
+                    car.y + car.height > obstacle.y
+                ) {
+                    gameRunning = false;
+                    gameOverDisplay.style.display = "block";
+                }
+            }
+        }
+
+        function gameLoop() {
+            if (!gameRunning) return;
+
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawCar();
+            drawObstacles();
+            updateObstacles();
+            checkCollision();
+
+            scoreDisplay.textContent = score;
+            requestAnimationFrame(gameLoop);
+        }
+
+        function handleKeydown(e) {
+            if (e.key === "ArrowLeft" && car.x > 0) {
+                car.x -= car.speed;
+            }
+            if (e.key === "ArrowRight" && car.x + car.width < canvas.width) {
+                car.x += car.speed;
+            }
+        }
+
+        function restartGame() {
+            car = { x: canvas.width / 2, y: canvas.height - 100, width: 50, height: 80, speed: 5 };
+            obstacles = [];
+            score = 0;
+            gameRunning = true;
+            gameOverDisplay.style.display = "none";
+            gameLoop();
+        }
+
+        document.addEventListener("keydown", handleKeydown);
+        gameLoop();
+    </script>
+</body>
+</html>
